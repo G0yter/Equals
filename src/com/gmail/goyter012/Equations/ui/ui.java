@@ -1,16 +1,22 @@
 package com.gmail.goyter012.Equations.ui;
 
 import com.gmail.goyter012.Equations.models.EqualDataSample;
+import com.gmail.goyter012.Equations.models.EqualResModel;
 import com.gmail.goyter012.Equations.services.Executor;
 import com.gmail.goyter012.Equations.services.ImageAdress;
 import com.sun.org.apache.xpath.internal.operations.Or;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -20,7 +26,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.io.DataOutput;
 import java.io.File;
+import java.util.Formatter;
 
 public class ui extends Application {
 
@@ -35,6 +43,8 @@ public class ui extends Application {
     String a = null;
     String b = null;
     String e = null;
+
+    Double result = null;
 
 
 
@@ -200,15 +210,6 @@ public class ui extends Application {
                     tfA.setText("-5");
                 }
 
-                tfA.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent event) {
-                        /////////////////////////////////////////////////////////////////////////////////////////////////////
-                    }
-                });
-
-
-
                 Label tfBLab = new Label("Введіть кінець інтервалу");
                 tfBLab.setFont(new Font(15));
                 tfBLab.setStyle("-fx-background-color: #2d75ff");
@@ -220,14 +221,6 @@ public class ui extends Application {
                 }else {
                     tfB.setText("5");
                 }
-
-
-                tfB.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent event) {
-                        //////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    }
-                });
 
                 Label tfELab = new Label("Введіть бажане наближення");
                 tfELab.setFont(new Font(15));
@@ -242,12 +235,65 @@ public class ui extends Application {
                 }
 
 
-                tfE.setOnAction(new EventHandler<ActionEvent>() {
+                Button confirm = new Button("Підтвердити");
+                confirm.setStyle("-fx-background-color: aqua");
+
+
+                final double[] abc = new double[3];
+                confirm.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent event) {
-                        ///////////////////////////////////////////////////////////////////////////////////////////////////////
+                        try {
+                            abc[0] = Double.valueOf(tfA.getText());
+                            abc[1] = Double.valueOf(tfB.getText());
+                            abc[2] = Double.valueOf(tfE.getText());
+
+                            Stage good = new Stage();
+                            Label g = new Label("Записано вірно" );
+                            g.setStyle("-fx-text-fill: black");
+
+                            FlowPane roo = new FlowPane(10,10);
+                            roo.setAlignment(Pos.CENTER);
+                            roo.getChildren().add(g);
+
+                            Scene scene = new Scene(roo, 150, 60);
+                            scene.setFill(Color.GREEN);
+                            roo.setBackground(null);
+
+                            good.setScene(scene);
+                            good.setTitle("Успіх!");
+
+                            good.show();
+                        } catch (NumberFormatException e) {
+                            tfA.setText("-5");
+                            tfB.setText("5");
+                            tfE.setText("0.001");
+
+                            Stage exception = new Stage();
+
+
+                            Label exc = new Label("Тут повинно бути ціле число!");
+                            exc.setStyle("-fx-text-fill: black");
+
+                            FlowPane ro = new FlowPane(10,10);
+                            ro.setAlignment(Pos.CENTER);
+
+                            ro.getChildren().addAll(exc);
+                            ro.setBackground(null);
+
+                            Scene scene = new Scene(ro, 210, 60);
+                            scene.setFill(Color.RED);
+
+
+                            exception.setScene(scene);
+                            exception.setTitle("Помилка!");
+                            exception.show();
+
+                        }
                     }
+
                 });
+
 
                 Label res = new Label("");
                 res.setFont(new Font(15));
@@ -259,7 +305,9 @@ public class ui extends Application {
                 rozrah.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent event) {
-                        ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+                        double re = Executor.methodChord(Double.valueOf(tfA.getText()),Double.valueOf(tfB.getText()),Double.valueOf(tfE.getText()));
+                        result = re;
+                        res.setText(Double.toString(re));
                     }
                 });
 
@@ -269,7 +317,33 @@ public class ui extends Application {
                 saver.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent event) {
-                        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+                        Stage saver = new Stage();
+                        Label la2 = new Label("Введіть назву файлу");
+                        Label res = new Label();
+
+                        TextField tf = new TextField();
+                        tf.setPrefColumnCount(10);
+
+                        Separator separator = new Separator();
+                        separator.setPrefWidth(200);
+
+                        EqualResModel equalResModel= new EqualResModel(result);
+                        tf.setOnAction(new EventHandler<ActionEvent>() {
+                            @Override
+                            public void handle(ActionEvent event) {
+                                Executor.saveToJson(equalResModel,tf.getText());
+                                res.setText("Записано корректно");
+                            }
+                        });
+
+                        FlowPane f = new FlowPane(10,10);
+                        f.setAlignment(Pos.CENTER);
+                        f.getChildren().addAll(la2,tf,separator,res);
+
+
+                        saver.setTitle("Збереження списку");
+                        saver.setScene(new Scene(f,250,100));
+                        saver.show();
                     }
                 });
 
@@ -279,22 +353,49 @@ public class ui extends Application {
                 schema.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent event) {
-                                            /////////////////////////////////////////////////////////////////////////////////////////
+                        Stage schem = new Stage();
 
+                        ImageView imageView = new ImageView(ImageAdress.imRender("/home/goyter/developing/IdeaProjects/AMOEqs/img/IMG_3314.jpg"));
+
+                        FlowPane flowPane = new FlowPane(10,10);
+                        flowPane.setAlignment(Pos.CENTER);
+                        flowPane.getChildren().add(imageView);
+
+                        schem.setScene(new Scene(flowPane, 760,680));
+                        schem.setTitle("Алгоритм методу Хорд");
+                        schem.show();
                     }
                 });
 
+                Button graphic = new Button("Графік");
+                graphic.setStyle("-fx-background-color: aqua");
+                graphic.setOnAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent event) {
+                        NumberAxis x = new NumberAxis();
+                        NumberAxis y = new NumberAxis();
+
+                        LineChart<Number, Number> numberLineChart = new LineChart<>(x, y);
 
 
+//                        double aa = Double.valueOf(a);
+//                        double bb = Double.valueOf(b);
 
+                        XYChart.Series series1 = new XYChart.Series();
+                        ObservableList<XYChart.Data> datas = FXCollections.observableArrayList();
+                        for (int i = -10; i < 10; i++){
+                            datas.add(new XYChart.Data(i,Executor.f(i)));
+                        }
 
-
-
-
-
-
-
-
+                        series1.setData(datas);
+                        Scene scene = new Scene(numberLineChart, 600, 600);
+                        numberLineChart.getData().add(series1);
+                        Stage st1 = new Stage();
+                        st1.setTitle("Графік ");
+                        st1.setScene(scene);
+                        st1.show();
+                    }
+                });
 
 
 
@@ -304,19 +405,14 @@ public class ui extends Application {
                 rootNode.setOrientation(Orientation.VERTICAL);
                 rootNode.setBackground(new Background(mybi));
 
-                rootNode.getChildren().addAll(methLabel,tfALab,tfA,tfBLab,tfB,tfELab,tfE,rozrah,res,saver,schema);
-                Scene mainScene = new Scene(rootNode,400,400);
+                rootNode.getChildren().addAll(methLabel,tfALab,tfA,tfBLab,tfB,tfELab,tfE,confirm,rozrah,res,saver,schema,graphic);
+                Scene mainScene = new Scene(rootNode,500,400);
 
                 mainStage.setScene(mainScene);
                 mainStage.setTitle("Метод Хорд");
                 mainStage.show();
             }
         });
-
-
-
-
-
 
 
 
@@ -416,7 +512,5 @@ public class ui extends Application {
         stage.show();
 
     }
-
-
 
 }
